@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Movie Panel (No JSX)</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Limelight&family=Monoton&family=Poiret+One&display=swap"
+        rel="stylesheet">
+
+    <!-- Load Libraries (UMD for global access) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/history@5/umd/history.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-router@6.3.0/umd/react-router.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.production.min.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-card: #141414;
+            --text-primary: #e0e0e0;
+            --text-gold: #f5c518;
+            --accent-color: #d10000;
+            --neon-glow: 0 0 10px #d10000, 0 0 20px #d10000;
+
+            font-family: 'Poiret One', cursive;
+            line-height: 1.6;
+            font-weight: 400;
+
+            color-scheme: dark;
+            color: var(--text-primary);
+            background-color: var(--bg-dark);
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            place-items: center;
+            min-width: 320px;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        #root {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Styles kept same as before */
+        .title-retro {
+            font-family: 'Monoton', cursive;
+            font-size: 4.5rem;
+            color: #fff;
+            text-transform: uppercase;
+            margin-bottom: 2rem;
+            letter-spacing: 5px;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .card-auth {
+            background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+            border: 4px double var(--text-gold);
+            padding: 3rem;
+            max-width: 450px;
+            width: 100%;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .input-field {
+            background-color: #0f0f0f;
+            border: none;
+            border-bottom: 2px solid #444;
+            color: var(--text-gold);
+            padding: 12px;
+            width: 100%;
+            margin-bottom: 1.5rem;
+            font-family: 'Poiret One', cursive;
+            font-size: 1.1rem;
+            box-sizing: border-box;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+            border: 2px solid #8a0000;
+            cursor: pointer;
+            padding: 0.8rem 2rem;
+            font-family: 'Limelight';
+            font-size: 1.2rem;
+            width: 100%;
+        }
+
+        .landing-container {
+            background: #000;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #000;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 2px solid var(--text-gold);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Updated Card Styles */
+        .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid #333;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(209, 0, 0, 0.5);
+            border-color: var(--accent-color);
+            z-index: 10;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            background: #222;
+            display: block;
+        }
+
+        .card-content {
+            padding: 15px;
+        }
+
+        .card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
+            color: white;
+            font-family: 'Limelight', cursive;
+        }
+
+        .card p {
+            margin: 0;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        /* End Updated Card Styles */
+
+        #debug-status {
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: yellow;
+            color: black;
+            padding: 5px;
+            z-index: 9999;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="debug-status">Initializing...</div>
+    <div id="root"></div>
+
+    <script>
+        // Simple Debugger
+        const debugObj = document.getElementById('debug-status');
+        debugObj.style.display = 'block';
+
+        window.onerror = function (msg, url, line) {
+            debugObj.style.backgroundColor = 'red';
+            debugObj.style.color = 'white';
+            debugObj.innerHTML = `Error: ${msg} (Line ${line})`;
+            return false;
+        };
+
+        // Check variables
+        if (typeof React === 'undefined') {
+            throw new Error("React not loaded. Check internet connection.");
+        }
+        if (typeof ReactDOM === 'undefined') {
+            throw new Error("ReactDOM not loaded.");
+        }
+        if (typeof ReactRouterDOM === 'undefined') {
+            throw new Error("ReactRouterDOM not loaded.");
+        }
+
+        debugObj.innerHTML = "Libraries Loaded. Starting App...";
+
+        const h = React.createElement;
+        const { useState, useEffect } = React;
+        const { HashRouter, Routes, Route, Link, Navigate, useNavigate } = ReactRouterDOM;
+
+        // -----------------------------------------------------------------------------
+        // Components (No JSX)
+        // -----------------------------------------------------------------------------
+
+        function Nav({ user, onLogout }) {
+            return h('nav', { className: 'nav' },
+                h(Link, { to: '/', style: { textDecoration: 'none', color: '#f5c518', fontSize: '1.8rem', fontFamily: 'Monoton', letterSpacing: '2px' } }, 'CINEMA'),
+                h('div', { style: { display: 'flex', alignItems: 'center', gap: '1rem' } },
+                    h('span', { style: { color: '#aaa', fontSize: '0.9rem', fontFamily: 'Poiret One' } }, user.email),
+                    user.role === 'admin' && h(Link, { to: '/admin', style: { color: '#d10000', fontWeight: 'bold', textDecoration: 'none' } }, 'ADMIN'),
+                    h('button', { onClick: onLogout, style: { padding: '0.4rem 1rem', fontSize: '0.9rem', background: '#000', border: '1px solid #f5c518', color: '#f5c518' } }, 'EXIT')
+                )
+            );
+        }
+
+        function AuthPage({ setUser }) {
+            const [isRegistering, setIsRegistering] = useState(false);
+            const [name, setName] = useState("");
+            const [email, setEmail] = useState("");
+            const [password, setPassword] = useState("");
+            const [confirmPassword, setConfirmPassword] = useState("");
+            const [error, setError] = useState("");
+            const navigate = useNavigate();
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setError("");
+
+                if (isRegistering) {
+                    if (password !== confirmPassword) {
+                        setError("Passwords do not match!");
+                        return;
+                    }
+                    if (!name || !email || !password) {
+                        setError("All fields are required.");
+                        return;
+                    }
+                    // Simulate Registration
+                    const user = { name, email, role: email.includes('admin') ? 'admin' : 'user' };
+                    // In a real app, you'd save to a backend here. 
+                    // For this demo, we just log them in immediately.
+                    setUser(user);
+                    localStorage.setItem("user", JSON.stringify(user));
+                    navigate("/");
+                } else {
+                    // Simulate Login
+                    if (!email || !password) {
+                        setError("Ticket and ID required.");
+                        return;
+                    }
+                    const user = { name: "Guest", email, role: email.includes('admin') ? 'admin' : 'user' };
+                    setUser(user);
+                    localStorage.setItem("user", JSON.stringify(user));
+                    navigate("/");
+                }
+            };
+
+            const toggleMode = () => {
+                setIsRegistering(!isRegistering);
+                setError("");
+                setPassword("");
+                setConfirmPassword("");
+            };
+
+            return h('div', { className: 'landing-container' },
+                h('div', { style: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', background: 'radial-gradient(circle, transparent 20%, #000 90%)', zIndex: 1 } }),
+                h('h1', { className: 'title-retro', style: { zIndex: 2, textShadow: '0 0 20px #d10000' } }, ['Cinema', h('br'), 'Paradiso']),
+                h('form', { className: 'card-auth', onSubmit: handleSubmit, style: { zIndex: 2, position: 'relative' } },
+                    h('div', { style: { textAlign: 'center', marginBottom: '2rem', borderBottom: '1px dashed #f5c518', paddingBottom: '1rem' } },
+                        h('h2', { style: { fontFamily: 'Limelight', textTransform: 'uppercase', letterSpacing: '2px', color: '#f5c518', margin: 0 } }, isRegistering ? 'Box Office' : 'Admit One'),
+                        h('span', { style: { fontSize: '0.8rem', color: '#666' } }, isRegistering ? 'NEW MEMBERSHIP' : 'TICKET NO. 093284')
+                    ),
+
+                    error && h('div', { style: { color: 'red', textAlign: 'center', marginBottom: '1rem', border: '1px solid red', padding: '0.5rem' } }, error),
+
+                    isRegistering && h('input', {
+                        className: 'input-field',
+                        type: 'text',
+                        placeholder: 'FULL NAME',
+                        value: name,
+                        onChange: e => setName(e.target.value)
+                    }),
+
+                    h('input', {
+                        className: 'input-field',
+                        type: 'email',
+                        placeholder: 'ENTER EMAIL',
+                        required: true,
+                        value: email,
+                        onChange: e => setEmail(e.target.value)
+                    }),
+
+                    h('input', {
+                        className: 'input-field',
+                        type: 'password',
+                        placeholder: 'PASSWORD',
+                        required: true,
+                        value: password,
+                        onChange: e => setPassword(e.target.value)
+                    }),
+
+                    isRegistering && h('input', {
+                        className: 'input-field',
+                        type: 'password',
+                        placeholder: 'CONFIRM PASSWORD',
+                        required: true,
+                        value: confirmPassword,
+                        onChange: e => setConfirmPassword(e.target.value)
+                    }),
+
+                    h('button', { type: 'submit', className: 'btn-primary' }, isRegistering ? 'PRINT TICKET' : 'ENTER THEATER'),
+
+                    h('div', { style: { textAlign: 'center', marginTop: '1.5rem' } },
+                        h('button', {
+                            type: 'button',
+                            onClick: toggleMode,
+                            style: { background: 'none', border: 'none', color: '#888', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'Poiret One', fontSize: '0.9rem' }
+                        }, isRegistering ? "Already have a ticket? Enter Theater" : "No ticket? Visit Box Office")
+                    )
+                )
+            );
+        }
+
+        function Home({ user }) {
+            const movies = [
+                { id: 0, title: "Toxic", year: "2026", genre: "Action/Crime", image: "https://upload.wikimedia.org/wikipedia/en/2/23/Toxic_The_Movie_Poster.jpg", featured: true, description: "A Fairy Tale for Grown-ups. Starring Yash. Directed by Geetu Mohandas." },
+                { id: 1, title: "Inception", year: 2010, genre: "Sci-Fi", image: null },
+                { id: 2, title: "The Dark Knight", year: 2008, genre: "Action", image: null },
+                { id: 3, title: "Interstellar", year: 2014, genre: "Sci-Fi", image: null },
+                { id: 4, title: "Dune 2", year: 2024, genre: "Sci-Fi", image: null },
+            ];
+
+            const featuredMovie = movies[0];
+            const otherMovies = movies.slice(1);
+
+            return h('div', null,
+                // Hero Section
+                h('div', {
+                    className: 'hero-section',
+                    style: {
+                        backgroundImage: `url(${featuredMovie.image})`,
+                        // Fallback gradient if image not found
+                        backgroundColor: '#111'
+                    }
+                },
+                    h('div', { className: 'hero-overlay' },
+                        h('div', { className: 'container', style: { padding: 0 } },
+                            h('span', { style: { background: '#d10000', color: '#fff', padding: '5px 10px', fontSize: '0.9rem', fontWeight: 'bold', fontFamily: 'sans-serif' } }, 'PREMIERING SOON'),
+                            h('h1', { className: 'hero-title' }, featuredMovie.title),
+                            h('div', { className: 'hero-meta' }, `${featuredMovie.year} • ${featuredMovie.genre}`),
+                            h('p', { style: { maxWidth: '600px', fontSize: '1.2rem', marginTop: '1rem', color: '#ddd' } }, featuredMovie.description),
+                            h('button', { className: 'btn-primary', style: { width: 'auto', marginTop: '1rem' } }, 'WATCH TRAILER')
+                        )
+                    )
+                ),
+
+                // Grid Section
+                h('div', { className: 'container' },
+                    h('h2', { style: { color: '#f5c518', fontFamily: 'Limelight' } }, 'Fan Favorites'),
+                    h('div', { className: 'movie-grid' },
+                        otherMovies.map(m =>
+                            h('div', { key: m.id, className: 'card' },
+                                m.image
+                                    ? h('img', { src: m.image, className: 'card-image', alt: m.title, onError: (e) => { e.target.style.display = 'none'; } })
+                                    : h('div', { className: 'card-image', style: { display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a1a', color: '#333', flexDirection: 'column' } },
+                                        h('span', { style: { fontSize: '3rem' } }, '🎬'),
+                                        h('span', { style: { fontSize: '0.8rem', marginTop: '10px' } }, 'NO POSTER')
+                                    ),
+                                h('div', { className: 'card-content' },
+                                    h('h3', { style: { color: m.featured ? '#d10000' : 'white' } }, m.title),
+                                    h('p', null, `${m.genre} • ${m.year}`)
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+        }
+
+        function AdminPanel() {
+            return h('div', { className: 'container' },
+                h('h1', { style: { color: '#f5c518', fontFamily: 'Limelight' } }, 'Projection Room (Admin)'),
+                h('p', null, 'Admin controls would go here.')
+            );
+        }
+
+        function App() {
+            const [user, setUser] = useState(null);
+
+            useEffect(() => {
+                const saved = localStorage.getItem("user");
+                if (saved) setUser(JSON.parse(saved));
+            }, []);
+
+            const handleLogout = () => {
+                localStorage.removeItem("user");
+                setUser(null);
+            };
+
+            return h(HashRouter, null,
+                h('div', { className: 'app-container' },
+                    user ? h(Nav, { user, onLogout: handleLogout }) : null,
+                    h(Routes, null,
+                        h(Route, { path: '/', element: user ? h(Home, { user }) : h(Navigate, { to: '/auth' }) }),
+                        h(Route, { path: '/auth', element: !user ? h(AuthPage, { setUser }) : h(Navigate, { to: '/' }) }),
+                        h(Route, { path: '/admin', element: user?.role === 'admin' ? h(AdminPanel) : h(Navigate, { to: '/' }) }),
+                        h(Route, { path: '*', element: h(Navigate, { to: user ? '/' : '/auth' }) })
+                    )
+                )
+            );
+        }
+
+        // Render
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(h(App));
+        debugObj.style.display = 'none'; // Hide debug if successful
+
+    </script>
+</body>
+
+</html>
